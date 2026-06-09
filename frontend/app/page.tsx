@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface Event {
   id: string;
@@ -36,10 +38,18 @@ export default function DashboardPage() {
   
   const [selectedCity, setSelectedCity] = useState("All Cities");
   const [availableCities, setAvailableCities] = useState<string[]>(["All Cities"]);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  
+  // Default range: Today -> Today + 12 Months
+  const [startDate, setStartDate] = useState<Date | null>(new Date());
+  const [endDate, setEndDate] = useState<Date | null>(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 12);
+    return d;
+  });
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [terminalOpen, setTerminalOpen] = useState(false);
 
   // Fetch scraper status and unique cities list once on mount
   useEffect(() => {
@@ -67,6 +77,14 @@ export default function DashboardPage() {
       .catch((err) => console.error("Error fetching cities list:", err));
   }, []);
 
+  const formatDateToYYYYMMDD = (d: Date | null): string => {
+    if (!d) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   // Fetch events on filter change
   useEffect(() => {
     setLoading(true);
@@ -76,11 +94,14 @@ export default function DashboardPage() {
     if (selectedCity !== "All Cities") {
       queryParams.push(`city=${encodeURIComponent(selectedCity)}`);
     }
-    if (startDate) {
-      queryParams.push(`start_date=${startDate}`);
+    
+    const startStr = formatDateToYYYYMMDD(startDate);
+    const endStr = formatDateToYYYYMMDD(endDate);
+    if (startStr) {
+      queryParams.push(`start_date=${startStr}`);
     }
-    if (endDate) {
-      queryParams.push(`end_date=${endDate}`);
+    if (endStr) {
+      queryParams.push(`end_date=${endStr}`);
     }
 
     const queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
@@ -100,10 +121,62 @@ export default function DashboardPage() {
       });
   }, [selectedCity, startDate, endDate]);
 
-  const clearFilters = () => {
+  const resetCityFilter = () => {
     setSelectedCity("All Cities");
-    setStartDate("");
-    setEndDate("");
+  };
+
+  const clearDates = () => {
+    setStartDate(null);
+    setEndDate(null);
+  };
+
+  const setDefaultDates = () => {
+    const start = new Date();
+    const end = new Date();
+    end.setMonth(end.getMonth() + 12);
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  const clearAllFilters = () => {
+    setSelectedCity("All Cities");
+    setStartDate(null);
+    setEndDate(null);
+  };
+
+  const getTerminalLogs = () => {
+    const logs = [];
+    logs.push({ type: "sys", text: `[system] initializing console shell at ${new Date().toISOString()}` });
+    logs.push({ type: "sys", text: `[system] connecting to api endpoint: ${API_BASE_URL}` });
+    
+    if (status.last_refresh) {
+      logs.push({ type: "success", text: `[system] database connection: active` });
+      
+      const hyroxStatus = status.hyrox === "healthy" ? "healthy (WP Crawler)" : status.hyrox;
+      logs.push({ 
+        type: status.hyrox === "healthy" ? "success" : "error", 
+        text: `[scraper:hyrox] status: ${hyroxStatus}` 
+      });
+      
+      const devilsStatus = status.devils_circuit === "healthy" ? "healthy (NextJS chunk search)" : status.devils_circuit;
+      logs.push({ 
+        type: status.devils_circuit === "healthy" ? "success" : "error", 
+        text: `[scraper:devils_circuit] status: ${devilsStatus}` 
+      });
+      
+      const yodhaaStatus = status.yodhaa === "healthy" ? "healthy (NextJS static parser)" : status.yodhaa;
+      logs.push({ 
+        type: status.yodhaa === "healthy" ? "success" : "error", 
+        text: `[scraper:yodhaa] status: ${yodhaaStatus}` 
+      });
+      
+      logs.push({ type: "sys", text: `[system] last db sync: ${new Date(status.last_refresh).toLocaleString("en-IN")}` });
+      logs.push({ type: "success", text: `[system] cache status: loaded (${events.length} active events fetched)` });
+    } else {
+      logs.push({ type: "warn", text: `[system] fetching status logs...` });
+    }
+    
+    return logs;
   };
 
   const formatEventDate = (startStr: string, endStr: string | null) => {
@@ -175,7 +248,14 @@ export default function DashboardPage() {
       {/* Filters */}
       <section className="filter-panel">
         <div className="filter-section">
-          <h2 className="filter-title">Filter by City</h2>
+          <div className="filter-section-header">
+            <h2 className="filter-title">Filter by City</h2>
+            {selectedCity !== "All Cities" && (
+              <button className="clear-btn-small" onClick={resetCityFilter}>
+                Clear
+              </button>
+            )}
+          </div>
           <div className="city-grid">
             {availableCities.map((city) => (
               <button
@@ -191,32 +271,45 @@ export default function DashboardPage() {
         </div>
 
         <div className="filter-section">
-          <h2 className="filter-title">Filter by Date Range</h2>
+          <div className="filter-section-header">
+            <h2 className="filter-title">Filter by Date Range</h2>
+            {(startDate || endDate) ? (
+              <button className="clear-btn-small" onClick={clearDates}>
+                Clear Dates
+              </button>
+            ) : (
+              <button className="clear-btn-small accent" onClick={setDefaultDates}>
+                Set 12 Months
+              </button>
+            )}
+          </div>
           <div className="date-inputs">
             <div className="date-input-wrapper">
-              <input
-                type="date"
-                id="start-date-picker"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                aria-label="Start date"
+              <DatePicker
+                selected={startDate}
+                onChange={(date: Date | null) => setStartDate(date)}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                placeholderText="Start date"
+                className="datepicker-input"
+                dateFormat="dd MMM yyyy"
               />
             </div>
             <span className="date-separator">to</span>
             <div className="date-input-wrapper">
-              <input
-                type="date"
-                id="end-date-picker"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                aria-label="End date"
+              <DatePicker
+                selected={endDate}
+                onChange={(date: Date | null) => setEndDate(date)}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate || undefined}
+                placeholderText="End date"
+                className="datepicker-input"
+                dateFormat="dd MMM yyyy"
               />
             </div>
-            {(selectedCity !== "All Cities" || startDate || endDate) && (
-              <button className="clear-btn" onClick={clearFilters}>
-                Clear
-              </button>
-            )}
           </div>
         </div>
       </section>
@@ -238,7 +331,7 @@ export default function DashboardPage() {
         <div className="error-state">
           <h3>Error Loading Events</h3>
           <p>{error}</p>
-          <button className="clear-btn" style={{ marginTop: "1rem" }} onClick={clearFilters}>
+          <button className="clear-btn" style={{ marginTop: "1rem" }} onClick={clearAllFilters}>
             Reset Filters
           </button>
         </div>
@@ -246,14 +339,18 @@ export default function DashboardPage() {
         <div className="empty-state">
           <h3>No races found</h3>
           <p>Try adjusting your search criteria or date range.</p>
-          <button className="clear-btn" style={{ marginTop: "1rem" }} onClick={clearFilters}>
+          <button className="clear-btn" style={{ marginTop: "1rem" }} onClick={clearAllFilters}>
             Clear All Filters
           </button>
         </div>
       ) : (
         <div className="events-grid">
-          {events.map((event) => (
-            <article key={event.id} className={getCardClass(event.organizer)}>
+          {events.map((event, index) => (
+            <article 
+              key={event.id} 
+              className={getCardClass(event.organizer)}
+              style={{ "--index": index } as React.CSSProperties}
+            >
               <div className="card-header">
                 <span className="organizer-badge">{event.organizer}</span>
                 <span className="location-badge">{event.city}</span>
@@ -296,6 +393,34 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+
+      {/* Collapsible Scraper Terminal */}
+      <div className={`terminal-drawer ${terminalOpen ? "open" : ""}`}>
+        <button className="terminal-header" onClick={() => setTerminalOpen(!terminalOpen)}>
+          <div className="terminal-title">
+            <span className="terminal-icon">&gt;_</span>
+            <span>Scraper System Shell</span>
+            <span className="terminal-badge">LIVE</span>
+          </div>
+          <div className="terminal-arrow">{terminalOpen ? "▼" : "▲"}</div>
+        </button>
+        {terminalOpen && (
+          <div className="terminal-body">
+            <div className="terminal-log-window">
+              {getTerminalLogs().map((log, idx) => (
+                <div key={idx} className={`log-line ${log.type}`}>
+                  <span className="log-timestamp">[{new Date().toLocaleTimeString("en-IN")}]</span>
+                  <span className="log-text">{log.text}</span>
+                </div>
+              ))}
+              <div className="log-line prompt">
+                <span className="log-timestamp">[{new Date().toLocaleTimeString("en-IN")}]</span>
+                <span className="log-text">vibe-scrapper-shell:~$ <span className="blinking-cursor">█</span></span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

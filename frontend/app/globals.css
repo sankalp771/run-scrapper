@@ -67,7 +67,7 @@ a {
 .dashboard-container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2rem 1.5rem 6rem 1.5rem;
 }
 
 /* --- Header Section --- */
@@ -342,12 +342,14 @@ a {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  /* Staggered Entrance Animation */
+  animation: cardFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--index) * 0.05s);
 }
 
 .event-card::before {
@@ -371,6 +373,7 @@ a {
   border-color: var(--border-color-hover);
   background-color: var(--bg-card-hover);
   box-shadow: var(--shadow-md), var(--shadow-glow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .event-card.hyrox:hover { 
@@ -575,7 +578,7 @@ a {
 
 @media (max-width: 576px) {
   .dashboard-container {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 5rem 1rem;
   }
   
   .title-area h1 {
@@ -619,4 +622,285 @@ a {
     min-height: auto;
   }
 }
+
+/* --- UI Polish Classes --- */
+.filter-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.clear-btn-small {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+}
+
+.clear-btn-small:hover {
+  color: var(--accent-cyan);
+}
+
+.clear-btn-small.accent {
+  color: var(--accent-purple);
+}
+
+.clear-btn-small.accent:hover {
+  color: var(--accent-cyan);
+}
+
+.datepicker-input {
+  width: 100%;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+
+.datepicker-input:focus {
+  border-color: var(--accent-cyan);
+}
+
+/* --- React-DatePicker Overrides --- */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color-hover) !important;
+  border-radius: 12px !important;
+  font-family: var(--font-sans) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+.react-datepicker__header {
+  background-color: rgba(9, 11, 17, 0.95) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+  padding-top: 8px !important;
+}
+
+.react-datepicker__current-month {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+}
+
+.react-datepicker__day-name, 
+.react-datepicker__day {
+  color: var(--text-secondary) !important;
+  width: 2.1rem !important;
+  line-height: 2.1rem !important;
+  margin: 0.12rem !important;
+  font-size: 0.82rem !important;
+}
+
+.react-datepicker__day-name {
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-primary) !important;
+  border-radius: 6px !important;
+}
+
+.react-datepicker__day--selected, 
+.react-datepicker__day--in-selecting-range, 
+.react-datepicker__day--in-range {
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)) !important;
+  color: #000 !important;
+  font-weight: bold !important;
+  border-radius: 6px !important;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: rgba(0, 229, 255, 0.15) !important;
+  color: var(--accent-cyan) !important;
+  border-radius: 6px !important;
+}
+
+.react-datepicker__day--disabled {
+  color: var(--text-muted) !important;
+  opacity: 0.25;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: var(--text-secondary) !important;
+  border-width: 2px 2px 0 0 !important;
+}
+
+.react-datepicker__navigation:hover *::before {
+  border-color: var(--accent-cyan) !important;
+}
+
+.react-datepicker__triangle {
+  display: none !important;
+}
+
+/* --- Card Stagger Animation --- */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Collapsible Developer Log Terminal --- */
+.terminal-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1280px;
+  background-color: rgba(9, 11, 17, 0.96);
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.terminal-drawer.open {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 -8px 32px var(--glow-cyan);
+}
+
+.terminal-header {
+  width: 100%;
+  background: rgba(18, 22, 36, 0.85);
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s;
+}
+
+.terminal-header:hover {
+  background: rgba(22, 28, 48, 0.95);
+}
+
+.terminal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.terminal-icon {
+  color: var(--accent-cyan);
+  font-weight: bold;
+}
+
+.terminal-badge {
+  font-size: 0.65rem;
+  background-color: rgba(16, 185, 129, 0.12);
+  color: var(--status-healthy);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.terminal-arrow {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.terminal-body {
+  height: 220px;
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
+  background-color: rgba(9, 11, 17, 0.98);
+}
+
+.terminal-log-window {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+}
+
+.log-line {
+  display: flex;
+  gap: 0.75rem;
+  line-height: 1.4;
+}
+
+.log-timestamp {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.log-text {
+  word-break: break-all;
+}
+
+.log-line.sys .log-text {
+  color: var(--text-secondary);
+}
+
+.log-line.success .log-text {
+  color: var(--status-healthy);
+}
+
+.log-line.warn .log-text {
+  color: var(--accent-amber);
+}
+
+.log-line.error .log-text {
+  color: var(--status-error);
+}
+
+.log-line.prompt .log-text {
+  color: var(--accent-cyan);
+}
+
+.blinking-cursor {
+  animation: blink 1s step-end infinite;
+  color: var(--accent-cyan);
+}
+
+@keyframes blink {
+  from, to { color: transparent }
+  50% { color: var(--accent-cyan) }
+}
+
 
