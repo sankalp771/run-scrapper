@@ -87,3 +87,26 @@ This document outlines the milestones and prompts used during the development of
 * Reverted the card layout to a single, full-width "Book Now" CTA button.
 * Configured the button redirect to target the official case-sensitive city event info pages directly (e.g. `https://www.devilscircuit.com/city/Chandigarh`).
 * Cleaned up the frontend stylesheets, rebuilt the Next.js production build, and verified that clicking the single "Book Now" button correctly opens the informative event page.
+
+---
+
+## 🎯 Milestone 5: Production Deployment & Platform Optimization
+
+### 1. Initial Prompt
+> can you help me in deployment , how I gotta do this okay?
+
+### 2. AI Response
+* Identified that the Next.js frontend had hardcoded local API calls to `127.0.0.1:8000`. Refactored `frontend/app/page.tsx` to read the API base URL from `process.env.NEXT_PUBLIC_API_URL` with a local fallback.
+* Proposed a dual-service deployment architecture: FastAPI backend on **Render** (free web service) and Next.js frontend on **Vercel** (free hosting).
+* Created a helper `Dockerfile` in the backend directory to make containerized hosting easier.
+
+### 3. Error / Hallucination Encountered
+* During deployment, the Render build failed with a `metadata-generation-failed` error on the `pydantic-core` package.
+* **Root Cause**: Render default environment was using Python 3.14 (an experimental pre-release version). Since pre-compiled wheels for Python 3.14 did not exist on PyPI, it tried compiling the Rust source code using `cargo` and `maturin`, which failed due to a read-only cache filesystem error:
+  `Read-only file system (os error 30)`
+
+### 4. Follow-up Prompt / Resolution
+* Created `.python-version` files in the repository root and `backend/` directory specifying stable Python `3.11.9`.
+* Pushed changes to GitHub, triggering a rebuild using Python 3.11 which successfully pulled pre-built wheels and deployed the API to production.
+* Set up a free cron job on `cron-job.org` calling `https://run-scrapper.onrender.com/status` every 5 minutes to keep the Render free tier from going to sleep.
+* Configured Vercel deployment pointing the root directory to `frontend` and supplying `NEXT_PUBLIC_API_URL` environment variable pointing to the Render backend URL.
