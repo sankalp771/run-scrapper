@@ -23,21 +23,6 @@ interface ScraperStatus {
   last_refresh: string | null;
 }
 
-const CITIES = [
-  "All Cities",
-  "Delhi NCR",
-  "Mumbai",
-  "Bengaluru",
-  "Hyderabad",
-  "Chandigarh",
-  "Ahmedabad",
-  "Pune",
-  "Indore",
-  "Jaipur",
-  "Kochi",
-  "Chennai",
-];
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function DashboardPage() {
@@ -50,13 +35,15 @@ export default function DashboardPage() {
   });
   
   const [selectedCity, setSelectedCity] = useState("All Cities");
+  const [availableCities, setAvailableCities] = useState<string[]>(["All Cities"]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch scraper status once on mount
+  // Fetch scraper status and unique cities list once on mount
   useEffect(() => {
+    // Fetch scraper status
     fetch(`${API_BASE_URL}/status`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch scraper status");
@@ -64,6 +51,20 @@ export default function DashboardPage() {
       })
       .then((data) => setStatus(data))
       .catch((err) => console.error("Error fetching status:", err));
+
+    // Fetch all events once to extract active cities list
+    fetch(`${API_BASE_URL}/events`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch events for cities extraction");
+        return res.json();
+      })
+      .then((data: Event[]) => {
+        const uniqueCities = Array.from(new Set(data.map((e) => e.city)))
+          .filter(Boolean)
+          .sort();
+        setAvailableCities(["All Cities", ...uniqueCities]);
+      })
+      .catch((err) => console.error("Error fetching cities list:", err));
   }, []);
 
   // Fetch events on filter change
@@ -176,7 +177,7 @@ export default function DashboardPage() {
         <div className="filter-section">
           <h2 className="filter-title">Filter by City</h2>
           <div className="city-grid">
-            {CITIES.map((city) => (
+            {availableCities.map((city) => (
               <button
                 key={city}
                 id={`city-filter-${city.toLowerCase().replace(/\s+/g, "-")}`}
