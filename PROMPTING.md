@@ -132,4 +132,38 @@ https://claude.ai/share/8735e5b7-b309-42fd-bd96-0fb92695d0c5
 * If details of an event change (venue, links, names), it updates the database and resets the `last_updated` timestamp.
 * If details are identical, it preserves the original `last_updated` timestamp.
 * Updated the date parser to support `YYYY-MM-DD` ISO format to correctly read serialized date strings from `events.json`.
-* Verified the diffing logic using a local verification test script
+* Verified the diffing logic using a local verification test script (`backend/test_diffing_logic.py`).
+
+---
+
+## 🎯 Milestone 7: DateRangePicker & UI Polish
+
+### 1. Initial Prompt
+> okay works also can we add this: DateRangePicker library, clears independently, default today -> 12 months
+
+### 2. AI Response
+* Installed `react-datepicker` and configured it to default to a dynamic date range of today to today + 12 months.
+* Refactored filter states and handlers to reset independently (clearing city pills does not clear dates, and "Clear Dates" does not clear cities).
+* Custom-themed the Datepicker calendar popover in Vanilla CSS to blend with the carbon developer dark mode.
+* Built a collapsible Scraper Log Terminal console at the footer of the page that formats real-time scraper health logs by parsing the `/status` API (subsequently removed in Milestone 8 to keep UI consumer-centric).
+* Added staggering animations to cards on entry, and brand-specific hover glows.
+
+### 3. Error / Hallucination Encountered
+* The Next.js build failed with a TypeScript type checking error:
+  `Type error: Parameter 'date' implicitly has an 'any' type.` on `onChange={(date) => ...}` callback parameters.
+
+### 4. Follow-up Prompt / Resolution
+* Fixed the type error in [page.tsx](file:///d:/Temp/run-scrapper/frontend/app/page.tsx) by adding explicit `: Date | null` type annotations to the callback parameters.
+* Re-ran `npm run build` and verified the build completes successfully.
+
+---
+
+## 🎯 Milestone 8: Developer Console Removal
+
+### 1. Initial Prompt
+> remove the developer console , it should feel like made for user not for us so remove it
+
+### 2. AI Response
+* Removed all remaining styles for `.terminal-drawer` and its children in `frontend/app/globals.css`.
+* Cleaned up references to the terminal in architectural documentation (`frontend/REASONING.md` and `README.md`).
+* Verified that the frontend application builds cleanly.

@@ -49,7 +49,6 @@ export default function DashboardPage() {
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [terminalOpen, setTerminalOpen] = useState(false);
 
   // Fetch scraper status and unique cities list once on mount
   useEffect(() => {
@@ -142,41 +141,6 @@ export default function DashboardPage() {
     setSelectedCity("All Cities");
     setStartDate(null);
     setEndDate(null);
-  };
-
-  const getTerminalLogs = () => {
-    const logs = [];
-    logs.push({ type: "sys", text: `[system] initializing console shell at ${new Date().toISOString()}` });
-    logs.push({ type: "sys", text: `[system] connecting to api endpoint: ${API_BASE_URL}` });
-    
-    if (status.last_refresh) {
-      logs.push({ type: "success", text: `[system] database connection: active` });
-      
-      const hyroxStatus = status.hyrox === "healthy" ? "healthy (WP Crawler)" : status.hyrox;
-      logs.push({ 
-        type: status.hyrox === "healthy" ? "success" : "error", 
-        text: `[scraper:hyrox] status: ${hyroxStatus}` 
-      });
-      
-      const devilsStatus = status.devils_circuit === "healthy" ? "healthy (NextJS chunk search)" : status.devils_circuit;
-      logs.push({ 
-        type: status.devils_circuit === "healthy" ? "success" : "error", 
-        text: `[scraper:devils_circuit] status: ${devilsStatus}` 
-      });
-      
-      const yodhaaStatus = status.yodhaa === "healthy" ? "healthy (NextJS static parser)" : status.yodhaa;
-      logs.push({ 
-        type: status.yodhaa === "healthy" ? "success" : "error", 
-        text: `[scraper:yodhaa] status: ${yodhaaStatus}` 
-      });
-      
-      logs.push({ type: "sys", text: `[system] last db sync: ${new Date(status.last_refresh).toLocaleString("en-IN")}` });
-      logs.push({ type: "success", text: `[system] cache status: loaded (${events.length} active events fetched)` });
-    } else {
-      logs.push({ type: "warn", text: `[system] fetching status logs...` });
-    }
-    
-    return logs;
   };
 
   const formatEventDate = (startStr: string, endStr: string | null) => {
@@ -393,34 +357,6 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
-
-      {/* Collapsible Scraper Terminal */}
-      <div className={`terminal-drawer ${terminalOpen ? "open" : ""}`}>
-        <button className="terminal-header" onClick={() => setTerminalOpen(!terminalOpen)}>
-          <div className="terminal-title">
-            <span className="terminal-icon">&gt;_</span>
-            <span>Scraper System Shell</span>
-            <span className="terminal-badge">LIVE</span>
-          </div>
-          <div className="terminal-arrow">{terminalOpen ? "▼" : "▲"}</div>
-        </button>
-        {terminalOpen && (
-          <div className="terminal-body">
-            <div className="terminal-log-window">
-              {getTerminalLogs().map((log, idx) => (
-                <div key={idx} className={`log-line ${log.type}`}>
-                  <span className="log-timestamp">[{new Date().toLocaleTimeString("en-IN")}]</span>
-                  <span className="log-text">{log.text}</span>
-                </div>
-              ))}
-              <div className="log-line prompt">
-                <span className="log-timestamp">[{new Date().toLocaleTimeString("en-IN")}]</span>
-                <span className="log-text">vibe-scrapper-shell:~$ <span className="blinking-cursor">█</span></span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

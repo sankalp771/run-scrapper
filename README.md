@@ -65,14 +65,44 @@ Open `http://localhost:3000` in your browser to view the dashboard.
 
 ## 📂 Directory Structure
 * `backend/`
-  * `main.py`: FastAPI server & scheduler setup
-  * `scraper.py`: Raw scraper functions for all three websites
-  * `normalizer.py`: Standardizes dates, formats cities, validates schema
+  * `main.py`: FastAPI server, lifespan setup, and background jobs
+  * `scraper.py`: Raw crawler engines querying target sites directly
+  * `normalizer.py`: Incremental diffing algorithms and schema parsing
   * `requirements.txt`: Python package requirements
-  * `events.json`: Aggregated local database of events
-  * `status.json`: Last refresh and health logs
+  * `Dockerfile`: Container configurations for hosting
+  * `.python-version`: Locks Render Python runtime to 3.11.9
 * `frontend/`
-  * `app/page.tsx`: Main React dashboard with filtering and feed logic
-  * `app/layout.tsx`: HTML layout and metadata configurations
-  * `app/globals.css`: Custom Vanilla CSS stylesheets and animations
-  * `package.json`: Node dependencies
+  * `app/page.tsx`: NextJS dashboard and Datepicker
+  * `app/layout.tsx`: HTML head layout configurations
+  * `app/globals.css`: Custom Vanilla CSS themes and animations
+  * `package.json`: Node dependencies and build scripts
+
+---
+
+## 🔧 Environment Variables
+
+### Backend Configuration
+* **`PYTHON_VERSION`** (Render environment): Set to `3.11.9` to avoid compilation errors on pre-release versions.
+
+### Frontend Configuration
+* **`NEXT_PUBLIC_API_URL`** (Vercel environment): Points to the deployed backend URL (e.g. `https://your-app.onrender.com`). Defaults to `http://127.0.0.1:8000` when running locally.
+
+---
+
+## 🌐 Production Deployment Architecture
+
+* **Backend**: Deployed as a web service on **Render** (free tier).
+  * **Keep-Alive Configuration**: A free cron job is set up on `cron-job.org` to ping `https://<your-backend>.onrender.com/status` every 12 minutes to prevent the free tier container from going to sleep.
+* **Frontend**: Deployed on **Vercel** (free tier Next.js host), with the root directory set to `frontend/`.
+
+---
+
+## ⚡ Self-Healing Dynamic Database Caching
+* The database is stored in a local JSON cache (`events.json`) inside the container.
+* On startup (including container wake-ups), the server unconditionally runs the scraping cycle to fetch the latest details.
+* The system performs an $O(N + M)$ linear-time diffing check:
+  * **Additions**: New events are automatically populated.
+  * **Updates**: Details that change are updated, resetting the `last_updated` timestamp.
+  * **Preservation**: Unchanged events keep their original `last_updated` timestamp.
+  * **Deletions**: Events removed from the source websites are dynamically deleted from the cache.
+
