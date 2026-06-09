@@ -8,7 +8,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from scraper import scrape_hyrox, scrape_devils_circuit, scrape_yodhaa
-from normalizer import normalize_all, EventSchema
+from normalizer import normalize_all, diff_and_normalize, EventSchema
 
 # Logging setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -75,8 +75,9 @@ def run_scrapers_and_update():
         logger.error(f"Yodhaa scraping failed: {e}")
         status["yodhaa"] = "failed"
         
-    # Normalize and save
-    normalized = normalize_all(raw_events)
+    # Normalize and save using diff check against existing database cache
+    existing_events = read_json_file(EVENTS_FILE, [])
+    normalized = diff_and_normalize(existing_events, raw_events)
     # Convert schemas to dictionaries for storage
     events_data = [event.model_dump() for event in normalized]
     

@@ -50,7 +50,13 @@ def parse_date(date_str: str) -> date:
         
     date_str = date_str.strip()
     
-    # Check if ISO format (e.g. 2026-11-21T00:00:00+05:30)
+    # Check if standard YYYY-MM-DD format (from events.json serialization)
+    try:
+        return date.fromisoformat(date_str)
+    except ValueError:
+        pass
+        
+    # Check if ISO format with time (e.g. 2026-11-21T00:00:00+05:30)
     if "T" in date_str:
         try:
             return datetime.fromisoformat(date_str).date()
@@ -159,6 +165,83 @@ def normalize_event(raw_event: Dict[str, Any], last_updated: datetime) -> Option
     except Exception as e:
         logger.error(f"Failed to normalize raw event {raw_event}: {e}")
         return None
+
+def diff_and_normalize(existing_events: List[Dict[str, Any]], raw_events: List[Dict[str, Any]]) -> List[EventSchema]:
+    from datetime import timezone
+    current_time = datetime.now(timezone.utc)
+    
+    # Map existing events by their unique ID
+    existing_map = {e["id"]: e for e in existing_events}
+    
+    normalized_list = []
+    seen_ids = set()
+    
+    for raw in raw_events:
+        # Create a temporary normalization to compare fields
+        temp_item = normalize_event(raw, current_time)
+        if not temp_item:
+            continue
+            
+        event_id = temp_item.id
+        if event_id in seen_ids:
+            continue
+        seen_ids.add(event_id)
+        
+        # Compare with existing event in database
+        if event_id in existing_map:
+            existing = existing_map[event_id]
+            
+            # Check if any details have changed
+            # Exclude last_updated from comparison
+            end_date_existing = parse_date(str(existing["end_date"])) if existing.get("end_date") else None
+            
+            fields_changed = (
+                existing.get("event_name") != temp_item.event_name or
+                existing.get("city") != temp_item.city or
+                existing.get("venue") != temp_item.venue or
+                parse_date(str(existing["start_date"])) != temp_item.start_date or
+                end_date_existing != temp_item.end_date or
+                existing.get("booking_url") != temp_item.booking_url or
+                existing.get("ticket_url") != temp_item.ticket_url or
+                existing.get("source_url") != temp_item.source_url
+            )
+            
+            if fields_changed:
+                # Field changed: Update fields and reset updated timestamp
+                temp_item.last_updated = current_time
+                normalized_list.append(temp_item)
+                logger.info(f"Event details changed for: {temp_item.event_name}. Updating database record.")
+            else:
+                # Keep existing record (preserve original last_updated timestamp)
+                last_up_raw = existing.get("last_updated")
+                if isinstance(last_up_raw, str):
+                    last_up = datetime.fromisoformat(last_up_raw)
+                else:
+                    last_up = last_up_raw or current_time
+                    
+                existing_item = EventSchema(
+                    id=event_id,
+                    organizer=existing["organizer"],
+                    event_name=existing["event_name"],
+                    city=existing["city"],
+                    venue=existing.get("venue"),
+                    start_date=parse_date(str(existing["start_date"])),
+                    end_date=end_date_existing,
+                    booking_url=existing["booking_url"],
+                    ticket_url=existing.get("ticket_url"),
+                    source_url=existing["source_url"],
+                    last_updated=last_up
+                )
+                normalized_list.append(existing_item)
+        else:
+            # New event discovered
+            temp_item.last_updated = current_time
+            normalized_list.append(temp_item)
+            logger.info(f"New event discovered: {temp_item.event_name}. Adding to database.")
+            
+    # Any event in existing_map that was not in raw_events (not seen) is discarded,
+    # satisfying the dynamic removal requirement.
+    return normalized_list
 
 def normalize_all(raw_events: List[Dict[str, Any]]) -> List[EventSchema]:
     from datetime import timezone

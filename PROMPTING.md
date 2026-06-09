@@ -108,9 +108,28 @@ https://claude.ai/share/8735e5b7-b309-42fd-bd96-0fb92695d0c5
 * During deployment, the Render build failed with a `metadata-generation-failed` error on the `pydantic-core` package.
 * **Root Cause**: Render default environment was using Python 3.14 (an experimental pre-release version). Since pre-compiled wheels for Python 3.14 did not exist on PyPI, it tried compiling the Rust source code using `cargo` and `maturin`, which failed due to a read-only cache filesystem error:
   `Read-only file system (os error 30)`
+* Also encountered static seeding issue: since `events.json` was tracked in Git, the app startup check bypassed scraping because it saw the file existed on disk, leading to stale, non-dynamic events in production.
 
 ### 4. Follow-up Prompt / Resolution
 * Created `.python-version` files in the repository root and `backend/` directory specifying stable Python `3.11.9`.
 * Pushed changes to GitHub, triggering a rebuild using Python 3.11 which successfully pulled pre-built wheels and deployed the API to production.
 * Set up a free cron job on `cron-job.org` calling `https://run-scrapper.onrender.com/status` every 5 minutes to keep the Render free tier from going to sleep.
 * Configured Vercel deployment pointing the root directory to `frontend` and supplying `NEXT_PUBLIC_API_URL` environment variable pointing to the Render backend URL.
+* Enforced live scraping on startup by making `run_scrapers_and_update` run unconditionally in the lifespan context manager, and removed `events.json` and `status.json` from Git tracking to avoid static seed caching.
+
+---
+
+## 🎯 Milestone 6: Incremental Updates & Event Diffing
+
+### 1. Initial Prompt
+> okay then, that seals the deal
+> now I wanna do two things, if the scraped websites remove an event, our page should also remove it okay?
+> like use a diffing thing, only change the changed details not parse whole again and again, and the time complexity should be low too
+
+### 2. AI Response
+* Proposed and implemented an $O(N + M)$ linear time-complexity diffing algorithm in [normalizer.py](file:///d:/Temp/run-scrapper/backend/normalizer.py) using dictionary-based lookups to match live events with existing database cache items.
+* If an event is deleted from the source website, it is excluded from the final list (dynamic removal).
+* If details of an event change (venue, links, names), it updates the database and resets the `last_updated` timestamp.
+* If details are identical, it preserves the original `last_updated` timestamp.
+* Updated the date parser to support `YYYY-MM-DD` ISO format to correctly read serialized date strings from `events.json`.
+* Verified the diffing logic using a local verification test script (`backend/test_diffing_logic.py`).
