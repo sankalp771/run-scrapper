@@ -94,10 +94,12 @@ async def lifespan(app: FastAPI):
     scheduler.start()
     logger.info("Started background scheduler for scraping every 4 hours.")
     
-    # Startup: Run scraper if events.json doesn't exist or is empty
-    if not os.path.exists(EVENTS_FILE) or os.path.getsize(EVENTS_FILE) == 0:
-        logger.info("No events found. Running initial scrape on startup...")
+    # Startup: Always run initial scrape on startup to populate live events
+    logger.info("Running initial scrape on startup...")
+    try:
         run_scrapers_and_update()
+    except Exception as e:
+        logger.error(f"Failed to run initial scrape on startup: {e}")
         
     yield
     
@@ -119,6 +121,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def read_root():
+    return {
+        "status": "online",
+        "message": "Welcome to Vibe Race Tracker India API. Use /events to retrieve races, /status for scraper details, or /refresh to force updates."
+    }
 
 @app.get("/events", response_model=List[EventSchema])
 def get_events(

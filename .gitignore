@@ -1,0 +1,37 @@
+# Python caches & build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+env/
+
+# Node/Next.js dependencies and builds
+node_modules/
+.next/
+out/
+build/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# Scraping Engine database caches (dynamic runtime files)
+backend/backend/events.json
+backend/backend/status.json
+backend/events.json
+backend/status.json
+events.json
+status.json
+
+# Environment files
+.env*
+*.pem
+
+# OS/IDE files
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
