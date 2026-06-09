@@ -36,8 +36,9 @@ const CITIES = [
   "Jaipur",
   "Kochi",
   "Chennai",
-  "Kolkata"
 ];
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function DashboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -56,7 +57,7 @@ export default function DashboardPage() {
 
   // Fetch scraper status once on mount
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/status")
+    fetch(`${API_BASE_URL}/status`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch scraper status");
         return res.json();
@@ -83,7 +84,7 @@ export default function DashboardPage() {
 
     const queryString = queryParams.length > 0 ? `?${queryParams.join("&")}` : "";
     
-    fetch(`http://127.0.0.1:8000/events${queryString}`)
+    fetch(`${API_BASE_URL}/events${queryString}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch events from server");
         return res.json();
