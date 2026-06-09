@@ -132,4 +132,4 @@ https://claude.ai/share/8735e5b7-b309-42fd-bd96-0fb92695d0c5
 * If details of an event change (venue, links, names), it updates the database and resets the `last_updated` timestamp.
 * If details are identical, it preserves the original `last_updated` timestamp.
 * Updated the date parser to support `YYYY-MM-DD` ISO format to correctly read serialized date strings from `events.json`.
-* Verified the diffing logic using a local verification test script (`backend/test_diffing_logic.py`).
+* Verified the diffing logic using a local verification test script
