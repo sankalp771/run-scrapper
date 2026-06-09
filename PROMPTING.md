@@ -75,17 +75,15 @@ This document outlines the milestones and prompts used during the development of
 * Investigated client bundles and tested path permutations to verify if they have dedicated, case-sensitive details pages:
   - Devils Circuit: `https://www.devilscircuit.com/city/{CityName}` (e.g. `/city/Jaipur`, `/city/Delhi%20NCR`)
   - The Yodhaa Race: `https://theyoddharace.com/city/{CityName}` (e.g. `/city/Mumbai`, `/city/Delhi`)
-* Proposed and implemented a dual-button architecture on event cards:
-  - **Book Now** (primary, styled gradient CTA button linking to GetMyBib direct ticketing form).
-  - **Event Details** (secondary, branded outline button linking to the official city details page).
+* Proposed and implemented a dual-button architecture (direct checkout + info details).
 
 ### 3. Error / Hallucination Encountered
-* Calling `/events` immediately after edits returned `ticket_url: null` because the persistent JSON cache `events.json` was generated before the new normalizer and schema changes were loaded by the server process.
+* Feedback indicated that showing dual links (one direct to GetMyBib and one to info page) was cluttered and that cards should exclusively direct to the informative city event pages (matching the user experience of HYROX).
 
 ### 4. Follow-up Prompt
-* Restart the backend server so the API re-evaluates the updated Pydantic schema structure and trigger the POST `/refresh` endpoint to regenerate the cached records.
+> no use of dual mode, only keep event page...
 
 ### 5. Final Resolution
-* Restarted Uvicorn and posted to `/refresh` to flush the old data structures.
-* Verified that the updated cards now show both buttons side-by-side: direct-to-checkout and official info page paths.
-
+* Reverted the card layout to a single, full-width "Book Now" CTA button.
+* Configured the button redirect to target the official case-sensitive city event info pages directly (e.g. `https://www.devilscircuit.com/city/Chandigarh`).
+* Cleaned up the frontend stylesheets, rebuilt the Next.js production build, and verified that clicking the single "Book Now" button correctly opens the informative event page.

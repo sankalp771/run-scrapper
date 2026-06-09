@@ -280,25 +280,16 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="card-buttons">
-                <button
-                  id={`book-btn-${event.id}`}
-                  className="cta-button"
-                  onClick={() => window.open(event.ticket_url || event.booking_url, "_blank", "noopener,noreferrer")}
-                >
-                  Book Now
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </button>
-                <button
-                  id={`details-btn-${event.id}`}
-                  className="details-button"
-                  onClick={() => window.open(event.booking_url, "_blank", "noopener,noreferrer")}
-                >
-                  Event Details
-                </button>
-              </div>
+              <button
+                id={`book-btn-${event.id}`}
+                className="cta-button"
+                onClick={() => window.open(event.booking_url, "_blank", "noopener,noreferrer")}
+              >
+                Book Now
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
             </article>
           ))}
         </div>
