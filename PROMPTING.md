@@ -2,6 +2,10 @@
 
 This document outlines the milestones and prompts used during the development of the **Vibe Race Tracker India** full-stack application.
 
+My WEB chats :
+https://chatgpt.com/share/6a2796ed-feb0-8321-a524-b4eec9504dee
+https://claude.ai/share/8735e5b7-b309-42fd-bd96-0fb92695d0c5
+
 ---
 
 ## 🎯 Milestone 1: Scraping Architecture & Platform Investigation
